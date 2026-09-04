@@ -1,31 +1,13 @@
-import subprocess
-import sys
-
-# إجبار السيرفر على تثبيت المكتبات الناقصة آلياً
-try:
-    import langchain_community
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "langchain-community", "langchain", "pypdf", "langchain-text-splitters", "langchain-huggingface", "chromadb", "sentence-transformers", "google-genai"])
-
 import os
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from google import genai
-
-# باقي الكود كما هو...
-import os
-import streamlit as st
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from google import genai
 
 st.set_page_config(page_title="مساعد المستندات السريع", page_icon="⚡", layout="wide")
-st.title("⚡ مساعد المستندات الفوري (متعدد الملفات)")
+st.title("⚡ مساعد المستندات الفوري")
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
@@ -39,7 +21,6 @@ def load_embeddings():
 
 embeddings = load_embeddings()
 
-# القائمة الجانبية
 api_key_input = st.sidebar.text_input("أدخل Google API Key هنا:", type="password")
 clean_api_key = api_key_input.strip() if api_key_input else ""
 
@@ -52,14 +33,13 @@ if st.sidebar.button("مسح سجل المحادثة 🗑️"):
 if clean_api_key:
     os.environ["GOOGLE_API_KEY"] = clean_api_key
 
-    # السماح برفع ملفات متعددة
-    uploaded_files = st.file_uploader("قم برفع ملفات PDF (يمكنك اختيار أكثر من ملف):", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("قم برفع ملفات PDF:", type="pdf", accept_multiple_files=True)
 
     if uploaded_files:
         current_files_names = [f.name for f in uploaded_files]
         
         if "retriever" not in st.session_state or st.session_state.get("files_names") != current_files_names:
-            with st.spinner("⚡ جاري تحلیل وقراءة جميع الملفات المرفوعة..."):
+            with st.spinner("⚡ جاري تحليل وقراءة جميع الملفات المرفوعة..."):
                 all_docs = []
                 
                 for uploaded_file in uploaded_files:
@@ -77,7 +57,7 @@ if clean_api_key:
                 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=120)
                 chunks = text_splitter.split_documents(all_docs)
 
-                vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
+                vectorstore = FAISS.from_documents(documents=chunks, embedding=embeddings)
                 
                 st.session_state["retriever"] = vectorstore.as_retriever(search_kwargs={"k": k_val})
                 st.session_state["files_names"] = current_files_names
