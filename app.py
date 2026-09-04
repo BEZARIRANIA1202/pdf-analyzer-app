@@ -34,18 +34,16 @@ if st.sidebar.button("مسح سجل المحادثة 🗑️"):
 if clean_api_key:
     os.environ["GOOGLE_API_KEY"] = clean_api_key
 
-    # السماح برفع ملفات متعددة (accept_multiple_files=True)
+    # السماح برفع ملفات متعددة
     uploaded_files = st.file_uploader("قم برفع ملفات PDF (يمكنك اختيار أكثر من ملف):", type="pdf", accept_multiple_files=True)
 
     if uploaded_files:
-        # جلب أسماء الملفات المرفوعة للتحقق من أي تغيير
         current_files_names = [f.name for f in uploaded_files]
         
         if "retriever" not in st.session_state or st.session_state.get("files_names") != current_files_names:
             with st.spinner("⚡ جاري تحلیل وقراءة جميع الملفات المرفوعة..."):
                 all_docs = []
                 
-                # قراءة كل ملف على حدة وتجميعه
                 for uploaded_file in uploaded_files:
                     temp_path = f"temp_{uploaded_file.name}"
                     with open(temp_path, "wb") as f:
@@ -58,11 +56,9 @@ if clean_api_key:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
 
-                # تقسيم نصوص كل المستندات
                 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=120)
                 chunks = text_splitter.split_documents(all_docs)
 
-                # تخزين المقاطع في قاعدة البيانات المتجهية
                 vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
                 
                 st.session_state["retriever"] = vectorstore.as_retriever(search_kwargs={"k": k_val})
@@ -74,7 +70,6 @@ if clean_api_key:
     if "retriever" in st.session_state:
         st.write("---")
         
-        # عرض سجل المحادثات
         for idx, msg in enumerate(st.session_state["messages"]):
             if msg["role"] == "user":
                 st.markdown(f"**❓ السؤال:** {msg['content']}")
@@ -91,7 +86,6 @@ if clean_api_key:
                 )
                 st.write("---")
 
-        # إدخال السؤال
         with st.form(key="query_form", clear_on_submit=True):
             user_query = st.text_input("اطرح سؤالك أو اطلب التلخيص للمستندات هنا:")
             submit_button = st.form_submit_button(label="إرسال السؤال 🚀")
