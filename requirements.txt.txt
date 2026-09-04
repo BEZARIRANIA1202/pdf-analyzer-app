@@ -1,10 +1,8 @@
 streamlit
 google-genai
-langchain
 langchain-community
 langchain-text-splitters
 langchain-huggingface
 sentence-transformers
 pypdf
-chromadb
-torch --extra-index-url https://download.pytorch.org/whl/cpu
+faiss-cpu
