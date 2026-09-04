@@ -1,3 +1,21 @@
+import subprocess
+import sys
+
+# إجبار السيرفر على تثبيت المكتبات الناقصة آلياً
+try:
+    import langchain_community
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "langchain-community", "langchain", "pypdf", "langchain-text-splitters", "langchain-huggingface", "chromadb", "sentence-transformers", "google-genai"])
+
+import os
+import streamlit as st
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from google import genai
+
+# باقي الكود كما هو...
 import os
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
